@@ -77,13 +77,7 @@ export default function ProfileScreen() {
 
       <Section title="Məxfilik">
         <RowGroup>
-          <ToggleRow
-            icon="sparkle"
-            label="Gələcəkdəki sən yadda saxlasın"
-            detail="Yalnız söhbətdə təsdiqlədiyin faktlar"
-            value={prefs.aiMemoryEnabled}
-            onChange={(v) => set({ aiMemoryEnabled: v })}
-          />
+          {/* AI memory (user-approved facts) is not built yet, so its toggle stays hidden until it is. */}
           <ToggleRow
             icon="shield"
             label="Vərdiş statistikası söhbətdə istifadə olunsun"
