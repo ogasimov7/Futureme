@@ -1,56 +1,48 @@
-# Welcome to your Expo app 👋
+# Future Roast
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A humorous AI companion that acts as your future self: chat with it, seal letters that open on a
+future date, track tiny daily missions, and face Future Court every week.
 
-## Get started
+**Status: stage 1.6.** The UI is complete, in Azerbaijani, and runs on **preview data** (seeded,
+saved on the device, labelled in the app). AI answers come from Gemini when a key is set (see
+below). Accounts and push notifications come in later stages. See [`docs/PLAN.md`](docs/PLAN.md) for the architecture, schema, risks and checklist.
 
-1. Install dependencies
+## Requirements
 
-   ```bash
-   npm install
-   ```
+- Node **24** (`nvm use`). Expo SDK 58 needs Node ≥ 22.13; Node 22.11 will warn and may break Metro.
+- For native: Expo Go on a phone, or Android Studio / Xcode for a development build.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run
 
 ```bash
-npm run reset-project
+nvm use
+npm install
+npx expo start        # press i / a / w, or scan the QR code with Expo Go
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+## AI (Gemini)
 
-### Other setup steps
+1. Create a free key at https://aistudio.google.com/apikey
+2. `cp .env.example .env.local` and set `GEMINI_API_KEY=...` (the file is git-ignored)
+3. Restart `npx expo start`, then check http://localhost:8081/api/health → `{"ai":true}`
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Without a key the app still works with offline answers, labelled as such.
 
-## Learn more
+## Checks
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm run typecheck     # tsc --noEmit
+npm run lint          # expo lint
+npm test              # jest (domain logic + preview repository)
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Layout
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Path | What lives there |
+|---|---|
+| `src/app/` | Expo Router routes only (tabs, letters, goals/missions, focus, court) |
+| `src/components/ui/` | Design-system primitives: Text, Button, Card, Chip, Form, Feedback, Icon |
+| `src/theme/tokens.ts` | Colors, type scale, spacing, radius, motion |
+| `src/domain/` | Pure logic: dates/time zones, streaks, letter rules, Future Court scoring |
+| `src/data/` | `Repository` interface, preview implementation, React store, selectors |
+| `supabase/migrations/` | Postgres schema with RLS (stage 2 wires it up) |
