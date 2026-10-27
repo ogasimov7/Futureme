@@ -8,11 +8,16 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SignIn } from '@/components/SignIn';
 import { ErrorState, Skeleton } from '@/components/ui/Feedback';
+import { AuthProvider, useAuth } from '@/data/auth';
+import { PreviewRepository } from '@/data/previewRepository';
 import { StoreProvider, useStore } from '@/data/store';
+import { supabase } from '@/data/supabase';
+import { SupabaseRepository } from '@/data/supabaseRepository';
 import { color, font, space } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
@@ -49,32 +54,62 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={navTheme}>
-      <StoreProvider>
+      <AuthProvider>
         <StatusBar style="light" />
-        <DataGate>
-          <Stack
-            screenOptions={{
-              headerStyle: { backgroundColor: color.bg },
-              headerTintColor: color.text,
-              headerTitleStyle: { fontFamily: font.bodyBold },
-              headerShadowVisible: false,
-              contentStyle: { backgroundColor: color.bg },
-            }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }} />
-            <Stack.Screen name="regret" options={{ presentation: 'modal', title: 'Peşman olacam?' }} />
-            <Stack.Screen name="persona" options={{ title: 'Gələcəkdəki sən' }} />
-            <Stack.Screen name="letters/new" options={{ presentation: 'modal', title: 'Yeni məktub' }} />
-            <Stack.Screen name="letters/[id]" options={{ title: '' }} />
-            <Stack.Screen name="goals/new" options={{ presentation: 'modal', title: 'Yeni hədəf' }} />
-            <Stack.Screen name="missions/new" options={{ presentation: 'modal', title: 'Yeni missiya' }} />
-            <Stack.Screen name="focus" options={{ presentation: 'fullScreenModal', headerShown: false }} />
-            <Stack.Screen name="court" options={{ title: 'Gələcək Məhkəməsi' }} />
-          </Stack>
-        </DataGate>
-      </StoreProvider>
+        <AccountGate>
+          <DataGate>
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: color.bg },
+                headerTintColor: color.text,
+                headerTitleStyle: { fontFamily: font.bodyBold },
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: color.bg },
+              }}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false, animation: 'fade' }} />
+              <Stack.Screen name="regret" options={{ presentation: 'modal', title: 'Peşman olacam?' }} />
+              <Stack.Screen name="persona" options={{ title: 'Gələcəkdəki sən' }} />
+              <Stack.Screen name="letters/new" options={{ presentation: 'modal', title: 'Yeni məktub' }} />
+              <Stack.Screen name="letters/[id]" options={{ title: '' }} />
+              <Stack.Screen name="goals/new" options={{ presentation: 'modal', title: 'Yeni hədəf' }} />
+              <Stack.Screen name="missions/new" options={{ presentation: 'modal', title: 'Yeni missiya' }} />
+              <Stack.Screen name="focus" options={{ presentation: 'fullScreenModal', headerShown: false }} />
+              <Stack.Screen name="court" options={{ title: 'Gələcək Məhkəməsi' }} />
+            </Stack>
+          </DataGate>
+        </AccountGate>
+      </AuthProvider>
     </ThemeProvider>
   );
+}
+
+let previewRepository: PreviewRepository | null = null;
+
+/**
+ * With Supabase configured: sign-in first, then a store bound to that user (a new store per
+ * account, so nothing leaks between sign-ins). Without it: the on-device preview data.
+ */
+function AccountGate({ children }: { children: ReactNode }) {
+  const { enabled, session } = useAuth();
+  const userId = session?.user.id ?? null;
+  const repository = useMemo(() => {
+    if (enabled && supabase && userId) return new SupabaseRepository(supabase, userId);
+    previewRepository ??= new PreviewRepository();
+    return previewRepository;
+  }, [enabled, userId]);
+
+  if (enabled && session === undefined) return <LoadingSkeleton />;
+  if (enabled && !session) return <SignIn />;
+  return (
+    <StoreProvider key={userId ?? 'preview'} repository={repository}>
+      {children}
+    </StoreProvider>
+  );
+}
+
+function LoadingSkeleton() {
+  return <LoadingSkeleton />;
 }
 
 /** Holds the app on a skeleton until the first load finishes, so screens can assume data. */

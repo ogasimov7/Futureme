@@ -9,6 +9,7 @@ import { ListRow, RowGroup, ToggleRow } from '@/components/ui/Form';
 import { Screen } from '@/components/ui/Screen';
 import { PreviewBadge, Section } from '@/components/ui/Section';
 import { Text } from '@/components/ui/Text';
+import { useAuth } from '@/data/auth';
 import { useData } from '@/data/store';
 import { PERSONALITY_INFO } from '@/domain/futureSelf';
 import type { Preferences } from '@/domain/types';
@@ -18,6 +19,8 @@ type Notice = { tone: 'error' | 'success' | 'info'; message: string } | null;
 
 export default function ProfileScreen() {
   const { data, mode, updatePreferences, exportData, resetPreview } = useData();
+  const { session, signOut } = useAuth();
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const prefs = data.preferences;
   const [notice, setNotice] = useState<Notice>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -102,7 +105,16 @@ export default function ProfileScreen() {
 
       <Section title="Məlumatların">
         <RowGroup>
-          <ListRow icon="download" label="Məlumatlarımı ixrac et" detail="Hamısı JSON kimi, möhürlü məktublar da daxil" onPress={runExport} />
+          <ListRow
+            icon="download"
+            label="Məlumatlarımı ixrac et"
+            detail={
+              mode === 'preview'
+                ? 'Hamısı JSON kimi, möhürlü məktublar da daxil'
+                : 'JSON kimi. Möhürlü məktubların mətni açılana qədər daxil deyil'
+            }
+            onPress={runExport}
+          />
           {mode === 'preview' && (
             <ListRow
               icon="refresh"
@@ -111,13 +123,31 @@ export default function ProfileScreen() {
               onPress={runReset}
             />
           )}
-          <ListRow icon="trash" label="Hesabı sil" detail="Hesab yarandıqdan sonra mümkün olacaq" tone="danger" disabled />
+          <ListRow
+            icon="trash"
+            label="Hesabı sil"
+            detail={mode === 'preview' ? 'Hesab yarandıqdan sonra mümkün olacaq' : 'Növbəti yenilənmədə əlavə olunacaq'}
+            tone="danger"
+            disabled
+          />
         </RowGroup>
       </Section>
 
       <Section title="Hesab">
         <RowGroup>
-          <ListRow icon="key" label="Daxil ol" detail="Hesablar növbəti yenilənmədə. Hazırda məlumatlar yalnız bu cihazdadır." disabled />
+          {session ? (
+            <>
+              <ListRow icon="profile" label="E-poçt" value={session.user.email ?? '—'} />
+              <ListRow
+                icon="key"
+                label={confirmSignOut ? 'Çıxmaq üçün yenidən toxun' : 'Çıxış'}
+                detail="Məlumatların hesabında qalır"
+                onPress={() => (confirmSignOut ? signOut() : setConfirmSignOut(true))}
+              />
+            </>
+          ) : (
+            <ListRow icon="key" label="Daxil ol" detail="Hesablar qoşulmayıb. Məlumatlar yalnız bu cihazdadır." disabled />
+          )}
         </RowGroup>
       </Section>
 

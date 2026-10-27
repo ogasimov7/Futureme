@@ -4,7 +4,6 @@ import { localDateOf } from '@/domain/dates';
 import type { LocalDate, Personality, Preferences, Profile, RegretCheck } from '@/domain/types';
 
 import { aiHealth } from './ai';
-import { PreviewRepository } from './previewRepository';
 import type { Repository, Snapshot } from './repository';
 
 type Status = 'loading' | 'ready' | 'error';
@@ -39,9 +38,8 @@ type StoreValue = {
 
 const StoreContext = createContext<StoreValue | null>(null);
 
-const repository: Repository = new PreviewRepository();
-
-export function StoreProvider({ children }: { children: ReactNode }) {
+/** One store per data source: preview (no account) or the signed-in user's Supabase data. */
+export function StoreProvider({ children, repository }: { children: ReactNode; repository: Repository }) {
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<Snapshot | null>(null);
@@ -73,7 +71,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [loadCount]);
+  }, [loadCount, repository]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);

@@ -218,11 +218,19 @@ to what you're about to do, had been lost in the productivity framing.
 - Gemini terms: free tier data may be used to improve Google products and read by reviewers;
   users must be 18+; serving users in the EEA/UK/Switzerland requires the paid tier.
 
-### Stage 2 — Auth and real data
-- [ ] Docker + `supabase start`; apply the migration; port the PGlite RLS checks to pgTAP
-- [ ] `@supabase/supabase-js` + `expo-secure-store` session storage; email OTP / Apple / Google sign-in
-- [ ] Onboarding: name, time zone (auto-detected), personality
-- [ ] `SupabaseRepository` behind the same interface; optimistic updates
+### Stage 2 — Auth and real data (code done 2026-10-28; waiting for the hosted project)
+- [x] Hosted free Supabase project chosen (no Docker on this machine); email one-time code sign-in
+- [x] Migration `20261028000000_app_fields.sql`: persona/onboarding columns, `regret_checks`
+      (only `outcome` editable), client-written chat with ownership checks.
+      Verified on PGlite: 8/8 new + 16/16 original checks. Found and fixed: Supabase default
+      privileges would have allowed editing a stored verdict.
+- [x] `@supabase/supabase-js` (sessions in AsyncStorage), `AuthProvider`, sign-in screen,
+      `SupabaseRepository` behind the same interface; preview mode when keys are absent
+- [ ] Create the project, apply both migrations, switch the Magic Link email template to `{{ .Token }}`
+- [ ] Live test: sign-in, onboarding, every write path, two accounts can't see each other
+- [ ] Built-in email allows 2 emails/hour: configure custom SMTP before real users
+- [ ] Server-side: verify the user JWT in AI routes, per-user quota (`consume_ai_quota`),
+      delete-account and full export functions
 
 ### Stage 3 — AI chat
 - [ ] Edge Function `chat` (auth check, input validation, quota, Claude call, persistence)
