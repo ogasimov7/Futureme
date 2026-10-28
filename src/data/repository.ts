@@ -49,5 +49,6 @@ export interface Repository {
   checkRegret(text: string): Promise<RegretCheck>;
   setRegretOutcome(id: string, outcome: NonNullable<RegretCheck['outcome']>): Promise<RegretCheck>;
   exportData(): Promise<unknown>;
-  reset(): Promise<Snapshot>;
+  /** Preview only: start over with demo content, or empty like a brand-new account. */
+  reset(options?: { empty?: boolean }): Promise<Snapshot>;
 }

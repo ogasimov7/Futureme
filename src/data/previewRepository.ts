@@ -38,8 +38,8 @@ export class PreviewRepository implements Repository {
     this.ready = this.restore();
   }
 
-  private seed() {
-    const { snapshot, letterBodies } = createSeed(new Date(), deviceTimeZone());
+  private seed(empty = false) {
+    const { snapshot, letterBodies } = createSeed(new Date(), deviceTimeZone(), { empty });
     this.state = snapshot;
     this.letterBodies = letterBodies;
   }
@@ -254,9 +254,9 @@ export class PreviewRepository implements Repository {
     };
   }
 
-  async reset() {
+  async reset(options: { empty?: boolean } = {}) {
     await wait(LATENCY_MS);
-    this.seed();
+    this.seed(options.empty);
     this.persist();
     return this.snapshot();
   }

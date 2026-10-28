@@ -21,8 +21,15 @@ function mulberry32(seed: number) {
 const EVERY_DAY: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 const WEEKDAYS: Weekday[] = [1, 2, 3, 4, 5];
 
-/** Seeded preview data anchored to `now`, so streaks and countdowns always look current. */
-export function createSeed(now: Date, timeZone: string): { snapshot: Snapshot; letterBodies: Map<string, string> } {
+/**
+ * Seeded preview data anchored to `now`. With `empty`, only a blank profile is created:
+ * exactly what a newly registered user starts with.
+ */
+export function createSeed(
+  now: Date,
+  timeZone: string,
+  { empty = false }: { empty?: boolean } = {},
+): { snapshot: Snapshot; letterBodies: Map<string, string> } {
   const today = localDateOf(now, timeZone);
   const at = (date: LocalDate, hour: number, minute = 0) => zonedTimeToUtc(date, hour, minute, timeZone).toISOString();
   const started = addDays(today, -27);
@@ -127,6 +134,10 @@ export function createSeed(now: Date, timeZone: string): { snapshot: Snapshot; l
     outcome: c.outcome,
   }));
 
+  const content = empty
+    ? { goals: [], missions: [], completions: [], focusSessions: [], letters: [], messages: [], regretChecks: [] }
+    : { goals, missions, completions, focusSessions, letters, messages, regretChecks };
+
   return {
     snapshot: {
       profile: { id: 'preview-user', displayName: '', timeZone, locale: 'az', createdAt: at(started, 9) },
@@ -141,14 +152,8 @@ export function createSeed(now: Date, timeZone: string): { snapshot: Snapshot; l
         aiMemoryEnabled: true,
         shareStatsWithAi: true,
       },
-      goals,
-      missions,
-      completions,
-      focusSessions,
-      letters,
-      messages,
-      regretChecks,
+      ...content,
     },
-    letterBodies,
+    letterBodies: empty ? new Map() : letterBodies,
   };
 }

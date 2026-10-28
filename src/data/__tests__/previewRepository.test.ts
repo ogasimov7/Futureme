@@ -92,3 +92,18 @@ describe('PreviewRepository regret checks', () => {
     expect(profile.displayName).toBe('Nigar');
   });
 });
+
+describe('PreviewRepository new-user reset', () => {
+  it('starts empty and not onboarded, like a fresh account', async () => {
+    const repo = new PreviewRepository();
+    await settle(repo.load());
+    const fresh = await settle(repo.reset({ empty: true }));
+    expect(fresh.preferences.onboarded).toBe(false);
+    expect(fresh.profile.displayName).toBe('');
+    for (const list of [fresh.goals, fresh.missions, fresh.completions, fresh.focusSessions, fresh.letters, fresh.messages, fresh.regretChecks]) {
+      expect(list).toHaveLength(0);
+    }
+    const demo = await settle(repo.reset());
+    expect(demo.goals.length).toBeGreaterThan(0);
+  });
+});

@@ -23,7 +23,7 @@ export default function ProfileScreen() {
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const prefs = data.preferences;
   const [notice, setNotice] = useState<Notice>(null);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmReset, setConfirmReset] = useState<'demo' | 'empty' | null>(null);
 
   const set = (patch: Partial<Preferences>) => {
     updatePreferences(patch).catch(() => setNotice({ tone: 'error', message: 'Ayar yadda saxlanmadı. Yenidən cəhd et.' }));
@@ -39,11 +39,11 @@ export default function ProfileScreen() {
     }
   };
 
-  const runReset = async () => {
-    if (!confirmReset) return setConfirmReset(true);
-    setConfirmReset(false);
+  const runReset = async (kind: 'demo' | 'empty') => {
+    if (confirmReset !== kind) return setConfirmReset(kind);
+    setConfirmReset(null);
     // Clears onboarding too, so the tab layout sends the user back to the start.
-    await resetPreview();
+    await resetPreview({ empty: kind === 'empty' });
   };
 
   return (
@@ -116,12 +116,20 @@ export default function ProfileScreen() {
             onPress={runExport}
           />
           {mode === 'preview' && (
-            <ListRow
-              icon="refresh"
-              label={confirmReset ? 'Təsdiq üçün yenidən toxun' : 'Sıfırdan başla'}
-              detail="Demo məlumatı bərpa edir və tanışlığı yenidən göstərir"
-              onPress={runReset}
-            />
+            <>
+              <ListRow
+                icon="sparkle"
+                label={confirmReset === 'empty' ? 'Təsdiq üçün yenidən toxun' : 'Yeni istifadəçi kimi başla'}
+                detail="Hər şeyi silir: tanışlıq və boş ekranlar, yeni qeydiyyatdan keçmiş kimi"
+                onPress={() => runReset('empty')}
+              />
+              <ListRow
+                icon="refresh"
+                label={confirmReset === 'demo' ? 'Təsdiq üçün yenidən toxun' : 'Demo məlumatla başla'}
+                detail="Nümunə missiyalar, məktublar və söhbətlə, tanışlıqdan başlayaraq"
+                onPress={() => runReset('demo')}
+              />
+            </>
           )}
           <ListRow
             icon="trash"

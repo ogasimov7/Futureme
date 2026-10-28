@@ -19,13 +19,13 @@ export function Section({ title, aside, children }: { title: string; aside?: Rea
   );
 }
 
-/** Marks seeded demo data, so preview numbers are never mistaken for real activity. */
+/** Marks preview mode (no account; seeded or empty local data), so it's never mistaken for synced data. */
 export function PreviewBadge() {
   return (
-    <View style={styles.badge} accessibilityLabel="Demo məlumat göstərilir, real fəaliyyətin deyil">
+    <View style={styles.badge} accessibilityLabel="Demo rejim: hesab yoxdur, məlumatlar yalnız bu cihazdadır">
       <View style={styles.dot} />
       <Text variant="caption" color="warning">
-        Demo məlumat
+        Demo rejim
       </Text>
     </View>
   );

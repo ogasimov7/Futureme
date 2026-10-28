@@ -33,7 +33,7 @@ type StoreValue = {
   checkRegret: Repository['checkRegret'];
   setRegretOutcome: (id: string, outcome: NonNullable<RegretCheck['outcome']>) => Promise<void>;
   exportData: Repository['exportData'];
-  resetPreview: () => Promise<void>;
+  resetPreview: (options?: { empty?: boolean }) => Promise<void>;
 };
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -175,8 +175,8 @@ export function StoreProvider({ children, repository }: { children: ReactNode; r
 
     exportData: () => repository.exportData(),
 
-    async resetPreview() {
-      setData(await repository.reset());
+    async resetPreview(options) {
+      setData(await repository.reset(options));
     },
   };
 
