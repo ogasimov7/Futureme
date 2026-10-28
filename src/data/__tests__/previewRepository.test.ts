@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { isDelivered } from '@/domain/letters';
 
 import { PreviewRepository } from '../previewRepository';
@@ -17,7 +19,7 @@ async function settle<T>(promise: Promise<T>): Promise<T> {
 
 describe('PreviewRepository', () => {
   it('never returns the body of a sealed letter', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     const { letters } = await settle(repo.load());
     const now = new Date();
     const sealed = letters.filter((l) => !isDelivered(l, now));
@@ -29,7 +31,7 @@ describe('PreviewRepository', () => {
   });
 
   it('refuses to mark a sealed letter as read', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     const { letters } = await settle(repo.load());
     const sealed = letters.find((l) => !isDelivered(l, new Date()))!;
     const assertion = expect(repo.markLetterRead(sealed.id)).rejects.toThrow('möhürlü');
@@ -38,7 +40,7 @@ describe('PreviewRepository', () => {
   });
 
   it('stores one completion per mission per day', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     await settle(repo.setMissionDone('m-run', '2030-01-01', true));
     await settle(repo.setMissionDone('m-run', '2030-01-01', true));
     const { completions } = await settle(repo.load());
@@ -46,7 +48,7 @@ describe('PreviewRepository', () => {
   });
 
   it('returns copies, so callers cannot mutate repository state', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     const first = await settle(repo.load());
     first.goals.length = 0;
     const second = await settle(repo.load());
@@ -64,7 +66,7 @@ describe('previewReply', () => {
 
 describe('PreviewRepository regret checks', () => {
   it('stores a check with the current persona year and records the outcome', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     await settle(repo.load());
     await settle(repo.updatePreferences({ futureYear: 2036, personality: 'sarcastic' }));
     const check = await settle(repo.checkRegret('Keçmişimə yazım?'));
@@ -77,25 +79,35 @@ describe('PreviewRepository regret checks', () => {
   });
 
   it('rejects an empty question', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     const assertion = expect(repo.checkRegret('   ')).rejects.toThrow();
     await jest.runAllTimersAsync();
     await assertion;
   });
 
   it('persists state so a new instance sees earlier changes', async () => {
-    const first = new PreviewRepository();
+    const first = new PreviewRepository('demo');
     await settle(first.load());
     await settle(first.updateProfile({ displayName: 'Nigar' }));
-    const second = new PreviewRepository();
+    const second = new PreviewRepository('demo');
     const { profile } = await settle(second.load());
     expect(profile.displayName).toBe('Nigar');
   });
 });
 
+describe('PreviewRepository first launch', () => {
+  it('starts empty and not onboarded by default, like a newly registered user', async () => {
+    await AsyncStorage.clear();
+    const { goals, letters, preferences } = await settle(new PreviewRepository().load());
+    expect(goals).toHaveLength(0);
+    expect(letters).toHaveLength(0);
+    expect(preferences.onboarded).toBe(false);
+  });
+});
+
 describe('PreviewRepository new-user reset', () => {
   it('starts empty and not onboarded, like a fresh account', async () => {
-    const repo = new PreviewRepository();
+    const repo = new PreviewRepository('demo');
     await settle(repo.load());
     const fresh = await settle(repo.reset({ empty: true }));
     expect(fresh.preferences.onboarded).toBe(false);

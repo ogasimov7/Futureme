@@ -14,7 +14,8 @@ import { splitLetters, todaysMissions, weekStats } from './selectors';
 
 const LATENCY_MS = 220;
 const REPLY_LATENCY_MS = 1100;
-const STORAGE_KEY = 'future-roast/preview/v2';
+// v3: first launch starts empty (new-user experience); bumping the key also clears older data.
+const STORAGE_KEY = 'future-roast/preview/v3';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 let idCounter = 0;
@@ -34,7 +35,8 @@ export class PreviewRepository implements Repository {
   private letterBodies!: Map<string, string>;
   private ready: Promise<void>;
 
-  constructor() {
+  /** `initial`: what a first launch (nothing stored yet) starts with. */
+  constructor(private readonly initial: 'empty' | 'demo' = 'empty') {
     this.ready = this.restore();
   }
 
@@ -54,9 +56,10 @@ export class PreviewRepository implements Repository {
         return;
       }
     } catch {
-      // Corrupt or unavailable storage: fall back to a fresh seed.
+      // Corrupt or unavailable storage: fall back to a fresh start.
     }
-    this.seed();
+    this.seed(this.initial === 'empty');
+    this.persist();
   }
 
   /** Best effort: a failed save only means the next launch starts from older data. */
